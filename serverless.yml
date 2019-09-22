@@ -7,11 +7,18 @@ plugins:
   - serverless-bundle
   - serverless-offline
 
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  tableName: ${self:custom.stage}-notes
+
 provider:
   name: aws
   runtime: nodejs8.10
   stage: dev
   region: us-east-2
+
+  environment:
+    tableName: ${self:custom.tableName}
 
   iamRoleStatements:
     - Effect: Allow
@@ -23,7 +30,9 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:us-east-2:*:*"
+
+      Resource:
+        - "Fn::GetAtt": [NotesTable, Arn]
 
 functions:
   create:
@@ -68,3 +77,4 @@ functions:
           authorizer: aws_iam
 resources:
   - ${file(resources/api-gateway-errors.yml)}
+  - ${file(resources/dynamodb-table.yml)}
